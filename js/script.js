@@ -9,7 +9,6 @@ const percentOtherItems = document.querySelectorAll('.other-items.percent');
 const numberOtherItems = document.querySelectorAll('.other-items.number');
 const otherItems = document.querySelectorAll('.other-items')
 
-
 const rollbackInput = document.querySelector('.rollback > .main-controls__range > [type="range"]');
 const rollbackSpan = document.querySelector('.rollback > .main-controls__range > .range-value');
 
@@ -26,6 +25,13 @@ let screenItems = document.querySelectorAll('.screen');
 const selectList = document.querySelector('.screen > .main-controls__select > select');
 const screensAmountInput = document.querySelector('.screen > .main-controls__input > input');
 
+const cmsCheckbox = document.querySelector('#cms-open');
+const hiddenCmsBlock = document.querySelector('.hidden-cms-variants');
+const cmsSelect = hiddenCmsBlock.querySelector('#cms-select');
+const cmsProcentBlock = hiddenCmsBlock.querySelector('.main-controls__input');
+const cmsOtherInput = cmsProcentBlock.querySelector('#cms-other-input')
+const cmsBlock = document.querySelector('.cms');
+
 const appData = {
     screens: [],
 
@@ -39,7 +45,9 @@ const appData = {
     fullPrice: 0,
     rollback: 0,
     priceWithRollback: 0,
+    priceWithoutCms: 0,
     screenNumber: 0,
+    wordpressCmsPrice: 0,
 
     addTitle: function () {
         document.title = mainTitle.textContent;
@@ -49,6 +57,51 @@ const appData = {
         screenItems[screenItems.length - 1].after(cloneScreen);
     },
 
+    clearCmsPrice: function () {
+
+        if (cmsCheckbox.checked) {
+            cmsCheckbox.checked = false;
+            hiddenCmsBlock.style.display = 'none';
+            if (cmsSelect.value !== '') {
+                cmsOtherInput.value = '';
+                cmsProcentBlock.style.display = 'none';
+                cmsSelect.value = ''
+            }
+        }
+
+    },
+
+    gettingCmsPrice: function () {
+
+        cmsBlock.addEventListener('change', (e) => {
+            const currElem = e.target;
+            let currElemValue;
+
+            if (currElem.getAttribute('id') === 'cms-open') {
+                if (currElem.checked === true) {
+                    hiddenCmsBlock.style.display = 'flex';
+                } else {
+                    hiddenCmsBlock.style.display = 'none';
+                }
+            }
+
+            if (currElem.getAttribute('id') === 'cms-select') {
+                currElemValue = currElem.value;
+
+                if (currElemValue === '50') {
+                    this.wordpressCmsPrice = +currElemValue;
+                }
+
+                if (currElemValue === 'other') {
+                    cmsProcentBlock.style.display = 'block';
+                } else {
+                    cmsProcentBlock.style.display = 'none';
+                }
+
+            }
+        });
+
+    },
 
     addScreens: function () {
         screenItems = document.querySelectorAll('.screen');
@@ -108,7 +161,12 @@ const appData = {
             this.servicePricesPercent += this.screenPrice * (this.servicesPercent[key] / 100);
         }
 
-        this.fullPrice = +this.screenPrice + this.servicePricesPercent + this.servicePricesNumber;
+        if (this.wordpressCmsPrice === 50) {
+            this.priceWithoutCms = +this.screenPrice + this.servicePricesPercent + this.servicePricesNumber;
+            this.fullPrice = this.priceWithoutCms + (0.5 * this.priceWithoutCms);
+        } else {
+            this.fullPrice = +this.screenPrice + this.servicePricesPercent + this.servicePricesNumber;
+        }
         this.priceWithRollback = (this.fullPrice * this.rollback) + this.fullPrice;
     },
 
@@ -228,11 +286,33 @@ const appData = {
         removeBlock();
         clearInputValue();
         changingRollbackValue();
+
     },
 
     reset: function () {
         this.enableElements();
         this.clearFiedls();
+        this.clearCmsPrice();
+
+        handlStartBtn.setAttribute('disabled', true);
+
+
+        this.screens = []
+
+        this.servicesPercent = {}
+        this.servicesNumber = {}
+
+        this.servicePricesPercent = 0
+        this.servicePricesNumber = 0
+
+        this.screenPrice = 0
+        this.fullPrice = 0
+        this.rollback = 0
+        this.priceWithRollback = 0
+        this.priceWithoutCms = 0
+        this.screenNumber = 0
+        this.wordpressCmsPrice = 0
+
     },
 
     start: function () {
@@ -243,9 +323,11 @@ const appData = {
         this.showResult();
 
         this.disableElements();
+
     },
 
     init: function () {
+        appData.gettingCmsPrice();
         appData.checkingValue();
 
         appData.addTitle();
@@ -266,5 +348,7 @@ const appData = {
 };
 
 appData.init();
+
+
 
 
